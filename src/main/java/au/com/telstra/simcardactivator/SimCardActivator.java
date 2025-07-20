@@ -13,6 +13,7 @@ import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import java.time.LocalDateTime;
 import java.util.List;
+import org.springframework.web.server.ResponseStatusException;
 
 @SpringBootApplication
 @RestController
@@ -65,5 +66,16 @@ public class SimCardActivator {
     @GetMapping("/activations")
     public List<ActivationRecord> getAllActivations() {
         return activationRecordRepository.findAll();
+    }
+
+    @GetMapping("/activation")
+    public Map<String, Object> getActivationById(@RequestParam long simCardId) {
+        ActivationRecord record = activationRecordRepository.findById(simCardId)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Activation record not found"));
+        Map<String, Object> response = new java.util.HashMap<>();
+        response.put("iccid", record.getIccid());
+        response.put("customerEmail", record.getCustomerEmail());
+        response.put("active", record.isSuccess());
+        return response;
     }
 }
