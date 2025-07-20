@@ -10,10 +10,20 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import java.util.Map;
+import org.springframework.beans.factory.annotation.Autowired;
+import java.time.LocalDateTime;
+import java.util.List;
 
 @SpringBootApplication
 @RestController
 public class SimCardActivator {
+
+    private final ActivationRecordRepository activationRecordRepository;
+
+    @Autowired
+    public SimCardActivator(ActivationRecordRepository activationRecordRepository) {
+        this.activationRecordRepository = activationRecordRepository;
+    }
 
     public static void main(String[] args) {
         SpringApplication.run(SimCardActivator.class, args);
@@ -44,6 +54,16 @@ public class SimCardActivator {
             System.out.println("Error calling actuator: " + e.getMessage());
         }
         System.out.println("Activation for ICCID " + iccid + " was " + (success ? "successful" : "unsuccessful"));
+
+        // Save activation record
+        ActivationRecord record = new ActivationRecord(iccid, customerEmail, success, LocalDateTime.now());
+        activationRecordRepository.save(record);
+
         return ResponseEntity.status(HttpStatus.OK).body(success ? "Activation successful" : "Activation failed");
+    }
+
+    @GetMapping("/activations")
+    public List<ActivationRecord> getAllActivations() {
+        return activationRecordRepository.findAll();
     }
 }
